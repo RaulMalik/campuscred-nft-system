@@ -1,10 +1,66 @@
+# Node.js / Hardhat
 node_modules/
-.env
-.env.local
 cache/
 artifacts/
 deployments/
 ignition/deployments/
+typechain/
+typechain-types/
+
+# Python / Flask:
+# Virtual Environment
+backend/venv/
+backend/env/
+backend/ENV/
+venv/
+env/
+
+# Python compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+backend/instance/
+
+# Flask
+backend/instance/
+backend/.webassets-cache
+
+# Testing
+backend/.pytest_cache/
+backend/.coverage
+backend/htmlcov/
+.tox/
+
+# Environment Variables
+.env
+.env.local
+*.env
+!.env.example
+!backend/.env.example
+
+
+# IDE / Editor
 .vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+
+# OS Files
 .DS_Store
+Thumbs.db
 *.log
+
+# Private Storage
+backend/app/private_storage/*
+!backend/app/private_storage/.gitkeep
