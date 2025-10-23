@@ -1,10 +1,103 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}CampusCred{% endblock %} - Blockchain Credentials</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    {% block extra_css %}{% endblock %}
 </head>
 <body>
+    <nav class="navbar navbar-expand-lg navbar-glass">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand d-flex align-items-center" href="/">
+                <img src="{{ url_for('static', filename='images/dtu-1.svg') }}"
+                     alt="DTU"
+                     style="height: 30px; width: auto; margin-right: 10px;">
+                <span class="brand-text">CampusCred</span>
+            </a>
 
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">
+                            <i class="fas fa-shield-alt me-1"></i> Verify
+                        </a>
+                    </li>
+
+                    <li class="nav-item ms-2">
+                        <button class="btn btn-icon theme-toggle" id="themeToggle" title="Toggle theme">
+                            <i class="fas fa-moon"></i>
+                        </button>
+                    </li>
+
+                    <li class="nav-item ms-2">
+                        <button class="btn btn-primary btn-connect-wallet" id="connectWalletBtn">
+                            <i class="fas fa-wallet me-2"></i>Connect Wallet
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="toast-container position-fixed top-0 end-0 p-3" id="toastContainer"></div>
+
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer mt-5">
+        <div class="container">
+            <div class="row py-4">
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="fas fa-graduation-cap me-2" style="font-size: 1.5rem;"></i>
+                        <span class="fw-bold">CampusCred</span>
+                    </div>
+                    <p class="text-muted small">Blockchain-based credentials for universities</p>
+                    <div class="badge bg-ethereum">
+                        <i class="fab fa-ethereum me-1"></i> Powered by Ethereum
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <h6 class="fw-semibold mb-3">Links</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-muted">About</a></li>
+                        <li><a href="#" class="text-muted">Documentation</a></li>
+                        <li><a href="#" class="text-muted">Privacy Policy</a></li>
+                        <li><a href="#" class="text-muted">Terms of Service</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h6 class="fw-semibold mb-3">Connect</h6>
+                    <div class="social-links">
+                        <a href="#" class="text-muted me-3"><i class="fab fa-twitter fa-lg"></i></a>
+                        <a href="#" class="text-muted me-3"><i class="fab fa-github fa-lg"></i></a>
+                        <a href="#" class="text-muted"><i class="fab fa-discord fa-lg"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="text-center py-3 border-top">
+                <small class="text-muted">&copy; 2025 CampusCred. All rights reserved.</small>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

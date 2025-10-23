@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, render_template
 from flask_sqlalchemy import SQLAlchemy
 import os
 
@@ -12,7 +12,7 @@ def create_app():
     # Get the path to frontend/static
     static_folder = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'frontend', 'static')
 
-    # Create Flask app with custom static folder
+    # Create Flask app
     app = Flask(__name__,
                 static_folder=static_folder,
                 static_url_path='/static')
@@ -21,27 +21,13 @@ def create_app():
     from .config import Config
     app.config.from_object(Config)
 
-    # Initialize extensions with app
+    # Initialize extensions
     db.init_app(app)
 
-    # Register blueprints (routes)
-    from .routes import auth
-    app.register_blueprint(auth.bp)
-
-    # Add root route
-    @app.route('/')
-    def index():
-        return jsonify({
-            'project': 'CampusCred',
-            'description': 'NFT-based Academic Credential System',
-            'version': '0.1.0',
-            'status': 'running',
-            'endpoints': {
-                'home': '/',
-                'auth': '/auth/',
-                'test': '/auth/test'
-            }
-        })
+    # Register blueprints (ORDER MATTERS!)
+    from .routes import home, auth
+    app.register_blueprint(home.bp)  # This handles /
+    app.register_blueprint(auth.bp)  # This handles /auth/*
 
     # Create database tables
     with app.app_context():

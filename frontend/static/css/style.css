@@ -1,0 +1,244 @@
+/* Theme Variables */
+
+:root[data-theme="dark"] {
+    --bg-primary: #0A0E27;
+    --bg-secondary: #1E2139;
+    --bg-tertiary: #2A2D4A;
+    --text-primary: #FFFFFF;
+    --text-secondary: #9CA3AF;
+    --border-color: #2A2D4A;
+    --card-bg: rgba(30, 33, 57, 0.8);
+    
+    --primary: #0052FF;
+    --secondary: #8C7BF5;
+    --success: #05B169;
+    --danger: #E03D3D;
+    --warning: #F59E0B;
+    
+    --navbar-bg: rgba(10, 14, 39, 0.95);
+    --footer-bg: #0A0E27;
+}
+
+:root[data-theme="light"] {
+    --bg-primary: #F7F9FC;
+    --bg-secondary: #FFFFFF;
+    --bg-tertiary: #F0F3F7;
+    --text-primary: #1A1D1F;
+    --text-secondary: #6F767E;
+    --border-color: #E6EAEE;
+    --card-bg: #FFFFFF;
+    
+    --primary: #0052FF;
+    --secondary: #8C7BF5;
+    --success: #05B169;
+    --danger: #E03D3D;
+    --warning: #F59E0B;
+    
+    --navbar-bg: rgba(255, 255, 255, 0.95);
+    --footer-bg: #F7F9FC;
+}
+
+/* Base Styles */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex: 1;
+}
+
+/* Logo Styling */
+
+.dtu-logo {
+    height: 120px;
+    width: auto;
+    filter: drop-shadow(0 4px 6px rgba(0, 82, 255, 0.3));
+    transition: transform 0.3s ease;
+}
+
+.dtu-logo:hover {
+    transform: scale(1.05);
+}
+
+/* Theme-specific logo adjustments */
+:root[data-theme="light"] .dtu-logo {
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+}
+
+:root[data-theme="dark"] .dtu-logo {
+    filter: drop-shadow(0 4px 6px rgba(0, 82, 255, 0.5));
+}
+
+/* Navbar */
+
+.navbar-glass {
+    background: var(--navbar-bg) !important;
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.navbar-brand {
+    color: var(--text-primary) !important;
+    font-weight: 600;
+}
+
+.brand-icon {
+    color: var(--primary);
+}
+
+.nav-link {
+    color: var(--text-secondary) !important;
+}
+
+.nav-link:hover {
+    color: var(--primary) !important;
+}
+
+/* Theme Toggle Button */
+
+.btn-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-icon:hover {
+    background: var(--primary);
+    color: white;
+    transform: scale(1.1);
+}
+
+/* Cards info */
+
+.card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+.card-glass {
+    background: var(--card-bg);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--border-color);
+}
+
+.card-body h5,
+.card-body h6 {
+    color: var(--text-primary);
+}
+
+.text-secondary {
+    color: var(--text-secondary) !important;
+}
+
+/* Buttons */
+
+.btn-primary {
+    background-color: var(--primary);
+    border: none;
+}
+
+.btn-primary:hover {
+    background-color: #0046DD;
+    transform: translateY(-2px);
+}
+
+.btn-outline-primary {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--primary);
+    color: white;
+}
+
+.btn-connect-wallet {
+    border-radius: 50px;
+    padding: 0.5rem 1.5rem;
+}
+
+/* Footer */
+
+.footer {
+    background-color: var(--footer-bg);
+    border-top: 1px solid var(--border-color);
+    color: var(--text-secondary);
+}
+
+.footer .text-muted {
+    color: var(--text-secondary) !important;
+}
+
+.footer a {
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.footer a:hover {
+    color: var(--primary) !important;
+}
+
+/* Powered by eth Badges */
+
+.bg-ethereum {
+    background: linear-gradient(135deg, #627EEA 0%, #8C7BF5 100%);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 50px;
+}
+
+.badge.bg-primary {
+    background-color: var(--primary) !important;
+}
+
+/* Animations */
+
+.fade-in {
+    animation: fadeIn 0.6s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive */
+
+@media (max-width: 768px) {
+    .display-4 {
+        font-size: 2rem;
+    }
+    
+    .btn-lg {
+        font-size: 0.9rem;
+        padding: 0.5rem 1rem;
+    }
+}
