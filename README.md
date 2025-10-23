@@ -55,3 +55,17 @@ After setting the variable, you can run the deployment with the Sepolia network:
 ```shell
 npx hardhat ignition deploy --network sepolia ignition/modules/Counter.ts
 ```
+## Backend Setup (Flask)
+
+To set up and run the Flask backend:
+```shell
+cd backend
+python3 -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+cp .env.example .env
+# Edit .env with your configuration
+python run.py
+```
+
+Visit http://localhost:5000 to access the application.
