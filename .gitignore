@@ -1,0 +1,10 @@
+node_modules/
+.env
+.env.local
+cache/
+artifacts/
+deployments/
+ignition/deployments/
+.vscode/
+.DS_Store
+*.log

@@ -1,0 +1,8 @@
+CampusCred NFT Contract Deployment
+
+Network: Sepolia Testnet
+Contract Address: 0x04fe8305F4C511052A5255758Bf71DF343CeFB57
+Etherscan: https://sepolia.etherscan.io/address/0x04fe8305F4C511052A5255758Bf71DF343CeFB57
+Deployed: October 23, 2025
+
+Your Wallet Address: [0x64f1640a5f17d21aa9815dc060c03b76470a3102]
