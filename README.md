@@ -68,4 +68,16 @@ cp .env.example .env
 python run.py
 ```
 
+### Create Database
+```shell
+python setup_database.py
+```
+
+This creates your local database with all required tables.
+
+### Run Application
+```shell
+python run.py
+```
+
 Visit http://localhost:5000 to access the application.
