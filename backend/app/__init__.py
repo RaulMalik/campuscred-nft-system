@@ -25,9 +25,10 @@ def create_app():
     db.init_app(app)
 
     # Register blueprints (ORDER MATTERS!)
-    from .routes import home, auth
+    from .routes import home, auth, claims
     app.register_blueprint(home.bp)  # This handles /
     app.register_blueprint(auth.bp)  # This handles /auth/*
+    app.register_blueprint(claims.bp)   # Our student claim route
 
     # Create database tables
     with app.app_context():

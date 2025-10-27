@@ -213,6 +213,203 @@ main {
     background-color: var(--primary) !important;
 }
 
+/* ========================================
+   Student Portal - Card Gradient Border
+   ======================================== */
+
+.card-gradient-border {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    padding: 2px;
+    border-radius: 12px;
+}
+
+.card-gradient-border-inner {
+    background: var(--bg-secondary);
+    border-radius: 10px;
+    padding: 2rem;
+}
+
+/* ========================================
+   Upload Zone
+   ======================================== */
+
+.upload-zone {
+    border: 2px dashed var(--border-color);
+    border-radius: 8px;
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.upload-zone:hover {
+    border-color: var(--primary);
+    background: rgba(0, 82, 255, 0.05);
+}
+
+.upload-zone.dragover {
+    border-color: var(--primary);
+    background: rgba(0, 82, 255, 0.1);
+}
+
+.upload-zone i {
+    font-size: 2.5rem;
+    color: var(--primary);
+    margin-bottom: 1rem;
+    display: block;
+}
+
+/* ========================================
+   Status Badges
+   ======================================== */
+
+.badge-microcredential,
+.badge-micro-credential,
+.badge-micro {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 0.35rem 0.75rem;
+    font-weight: 600;
+    border-radius: 20px;
+}
+
+.badge-coursecompletion,
+.badge-course-completion {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+    padding: 0.35rem 0.75rem;
+    font-weight: 600;
+    border-radius: 20px;
+}
+
+.badge-diploma {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: white;
+    padding: 0.35rem 0.75rem;
+    font-weight: 600;
+    border-radius: 20px;
+}
+
+.badge-pending {
+    background: var(--warning);
+    color: #000;
+    padding: 0.35rem 0.75rem;
+    font-weight: 600;
+    border-radius: 20px;
+}
+
+.badge-approved {
+    background: var(--primary);
+    color: white;
+    padding: 0.35rem 0.75rem;
+    font-weight: 600;
+    border-radius: 20px;
+}
+
+.badge-minted {
+    background: var(--success);
+    color: white;
+    padding: 0.35rem 0.75rem;
+    font-weight: 600;
+    border-radius: 20px;
+}
+
+.badge-denied,
+.badge-rejected {
+    background: var(--danger);
+    color: white;
+    padding: 0.35rem 0.75rem;
+    font-weight: 600;
+    border-radius: 20px;
+}
+
+/* Light mode adjustments for badges */
+:root[data-theme="light"] .badge-microcredential,
+:root[data-theme="light"] .badge-micro-credential,
+:root[data-theme="light"] .badge-micro {
+    background: linear-gradient(135deg, #5568d3 0%, #6a3f8f 100%);
+    color: white;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+/* ========================================
+   Status Icons
+   ======================================== */
+
+.status-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+}
+
+.status-icon.status-pending {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--warning);
+}
+
+.status-icon.status-approved {
+    background: rgba(0, 82, 255, 0.1);
+    color: var(--primary);
+}
+
+.status-icon.status-minted {
+    background: rgba(5, 177, 105, 0.1);
+    color: var(--success);
+}
+
+.status-icon.status-denied,
+.status-icon.status-rejected {
+    background: rgba(224, 61, 61, 0.1);
+    color: var(--danger);
+}
+
+/* ========================================
+   Nav Pills - UPDATED
+   ======================================== */
+
+.nav-pills {
+    gap: 0.5rem;
+}
+
+.nav-pills .nav-link {
+    color: var(--text-secondary);
+    border-radius: 50px;
+    padding: 0.5rem 1.25rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.nav-pills .nav-link:hover {
+    color: var(--primary);
+    background: rgba(0, 82, 255, 0.1);
+}
+
+.nav-pills .nav-link.active {
+    background: var(--primary) !important;
+    color: white !important;
+    border-color: var(--primary);
+    box-shadow: 0 2px 8px rgba(0, 82, 255, 0.3);
+}
+
+/* Light mode specific */
+:root[data-theme="light"] .nav-pills .nav-link {
+    color: #6F767E;
+}
+
+:root[data-theme="light"] .nav-pills .nav-link:hover {
+    background: rgba(0, 82, 255, 0.08);
+}
+
+:root[data-theme="light"] .nav-pills .nav-link.active {
+    background: var(--primary) !important;
+    color: white !important;
+}
+
 /* Animations */
 
 .fade-in {
