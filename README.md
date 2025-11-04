@@ -1,362 +1,83 @@
-# CampusCred NFT System
+# Sample Hardhat 3 Beta Project (`mocha` and `ethers`)
 
-A blockchain-based credential verification system for educational institutions, built with Flask (backend), Hardhat (smart contracts), and modern web technologies (frontend).
+This project showcases a Hardhat 3 Beta project using `mocha` for tests and the `ethers` library for Ethereum interactions.
 
----
+To learn more about the Hardhat 3 Beta, please visit the [Getting Started guide](https://hardhat.org/docs/getting-started#getting-started-with-hardhat-3). To share your feedback, join our [Hardhat 3 Beta](https://hardhat.org/hardhat3-beta-telegram-group) Telegram group or [open an issue](https://github.com/NomicFoundation/hardhat/issues/new) in our GitHub issue tracker.
 
-## 📋 Table of Contents
+## Project Overview
 
-- [Overview](#overview)
-- [Project Structure](#project-structure)
-- [Prerequisites](#prerequisites)
-- [Installation](#installation)
-- [Running the Application](#running-the-application)
-- [Testing](#testing)
-- [Development Workflow](#development-workflow)
-- [Smart Contract Deployment](#smart-contract-deployment)
-- [Contributing](#contributing)
+This example project includes:
 
----
+- A simple Hardhat configuration file.
+- Foundry-compatible Solidity unit tests.
+- TypeScript integration tests using `mocha` and ethers.js
+- Examples demonstrating how to connect to different types of networks, including locally simulating OP mainnet.
 
-## 🎯 Overview
+## Usage
 
-CampusCred enables educational institutions to issue verifiable digital credentials as NFTs on the Ethereum blockchain. The system provides:
+### Running Tests
 
-- **Student Portal**: Submit credential claims with supporting evidence
-- **Instructor Dashboard**: Review and approve/reject credential claims
-- **Verification System**: Public verification of issued credentials (coming in Sprint 2)
-- **Blockchain Integration**: NFT minting for approved credentials (coming in Sprint 2)
+To run all the tests in the project, execute the following command:
 
-**Current Status**: Sprint 1 Complete (Skeletal System Ready for Nov 8 Delivery)
-
----
-
-## 📁 Project Structure
-
-```
-campuscred-nft-system/
-├── backend/                    # Flask backend application
-│   ├── app/
-│   │   ├── models.py          # Database models
-│   │   ├── routes/            # API endpoints
-│   │   ├── services/          # Business logic
-│   │   └── templates/         # HTML templates
-│   ├── tests/                 # Unit tests (25 tests)
-│   ├── instance/              # Local database (not in git)
-│   ├── venv/                  # Python virtual environment (not in git)
-│   ├── requirements.txt       # Python dependencies
-│   └── run.py                 # Application entry point
-├── frontend/                   # Static assets
-│   └── static/
-│       ├── css/               # Stylesheets
-│       └── js/                # JavaScript files
-├── contracts/                  # Solidity smart contracts
-├── ignition/                   # Hardhat deployment modules
-├── test/                       # Smart contract tests
-└── hardhat.config.ts          # Hardhat configuration
+```shell
+npx hardhat test
 ```
 
----
+You can also selectively run the Solidity or `mocha` tests:
 
-## ⚙️ Prerequisites
-
-Before you begin, ensure you have the following installed:
-
-- **Python 3.12+** ([Download](https://www.python.org/downloads/))
-- **Node.js 18+** and npm ([Download](https://nodejs.org/))
-- **Git** ([Download](https://git-scm.com/downloads))
-
-Verify installations:
-
-```bash
-python3 --version   # Should show 3.12+
-node --version      # Should show v18+
-npm --version       # Should show 9+
-git --version       # Should show 2.0+
+```shell
+npx hardhat test solidity
+npx hardhat test mocha
 ```
 
----
+### Make a deployment to Sepolia
 
-## 🚀 Installation
+This project includes an example Ignition module to deploy the contract. You can deploy this module to a locally simulated chain or to Sepolia.
 
-### Step 1: Clone the Repository
+To run the deployment to a local chain:
 
-```bash
-git clone <repository-url>
-cd campuscred-nft-system
-```
-
-### Step 2: Backend Setup
-
-```bash
-# Navigate to backend directory
-cd backend
-
-# Create Python virtual environment
-python3 -m venv venv
-
-# Activate virtual environment
-source venv/bin/activate          # On macOS/Linux
-# venv\Scripts\activate           # On Windows
-
-# Install Python dependencies
-pip install -r requirements.txt
-
-# Create environment configuration
-cp .env.example .env
-
-# Initialize database
-python setup_database.py
-```
-
-**Expected output:**
-```
-Creating database tables...
-Database created successfully!
-Tables: claims
-
-Setup complete! You can now run: python run.py
-```
-
-### Step 3: Smart Contract Setup
-
-```bash
-# Return to project root
-cd ..
-
-# Install Node.js dependencies
-npm install
-```
-
----
-
-## 🏃 Running the Application
-
-### Backend (Flask)
-
-```bash
-# Ensure you're in the backend directory with venv activated
-cd backend
-source venv/bin/activate
-
-# Start Flask development server
-python run.py
-```
-
-**Expected output:**
-```
- * Running on http://127.0.0.1:5000
- * Debug mode: on
-```
-
-**Access the application:**
-- Homepage: http://localhost:5000
-- Student Portal: http://localhost:5000/student/portal
-- Instructor Dashboard: http://localhost:5000/instructor/dashboard
-
-### Smart Contracts (Hardhat)
-
-```bash
-# From project root
-npx hardhat test                    # Run smart contract tests
-npx hardhat node                    # Start local blockchain
-```
-
----
-
-## 🧪 Testing
-
-### Backend Tests
-
-```bash
-# Navigate to backend
-cd backend
-source venv/bin/activate
-
-# Run all tests
-python -m pytest
-
-# Run with verbose output
-python -m pytest -v
-
-# Run specific test file
-python -m pytest tests/test_models.py
-
-# Run with coverage report
-python -m pytest --cov=app --cov-report=html
-```
-
-**Test Coverage:**
-- ✅ 25 unit tests covering models, routes, and services
-- ✅ Student submission flow
-- ✅ Instructor approval/rejection logic
-- ✅ File storage and hashing
-- ✅ Database operations
-
-### Smart Contract Tests
-
-```bash
-# From project root
-npx hardhat test                    # All tests
-npx hardhat test solidity           # Solidity tests only
-npx hardhat test mocha             # TypeScript tests only
-```
-
----
-
-## 👨‍💻 Development Workflow
-
-### Daily Development
-
-```bash
-# 1. Pull latest changes
-git pull
-
-# 2. Activate virtual environment
-cd backend
-source venv/bin/activate
-
-# 3. Start development server
-python run.py
-```
-
-### After Pulling New Code
-
-If database models have changed:
-
-```bash
-# Recreate database
-rm instance/campuscred.db
-python setup_database.py
-
-# Restart application
-python run.py
-```
-
-### Adding New Dependencies
-
-**Python (Backend):**
-```bash
-pip install <package-name>
-pip freeze > requirements.txt    # Update requirements
-```
-
-**Node.js (Smart Contracts):**
-```bash
-npm install <package-name>
-```
-
----
-
-## 🔐 Smart Contract Deployment
-
-### Deploy to Local Network
-
-```bash
-# Terminal 1: Start local blockchain
-npx hardhat node
-
-# Terminal 2: Deploy contracts
+```shell
 npx hardhat ignition deploy ignition/modules/Counter.ts
 ```
 
-### Deploy to Sepolia Testnet
+To run the deployment to Sepolia, you need an account with funds to send the transaction. The provided Hardhat configuration includes a Configuration Variable called `SEPOLIA_PRIVATE_KEY`, which you can use to set the private key of the account you want to use.
 
-```bash
-# Set private key
+You can set the `SEPOLIA_PRIVATE_KEY` variable using the `hardhat-keystore` plugin or by setting it as an environment variable.
+
+To set the `SEPOLIA_PRIVATE_KEY` config variable using `hardhat-keystore`:
+
+```shell
 npx hardhat keystore set SEPOLIA_PRIVATE_KEY
+```
 
-# Deploy
+After setting the variable, you can run the deployment with the Sepolia network:
+
+```shell
 npx hardhat ignition deploy --network sepolia ignition/modules/Counter.ts
 ```
+## Backend Setup (Flask)
 
----
-
-## 📊 Database Management
-
-### View Database Contents
-
-```bash
+To set up and run the Flask backend:
+```shell
 cd backend
-sqlite3 instance/campuscred.db
-
-# Inside SQLite shell:
-.tables                             # List tables
-SELECT * FROM claims;               # View all claims
-SELECT * FROM claims WHERE status='pending';  # Filter by status
-.quit                               # Exit
+python3 -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+cp .env.example .env
+# Edit .env with your configuration
+python run.py
 ```
 
-### Reset Database
-
-```bash
-cd backend
-rm instance/campuscred.db
+### Create Database
+```shell
 python setup_database.py
 ```
 
----
+This creates your local database with all required tables.
 
-## 🐛 Troubleshooting
-
-### "ModuleNotFoundError: No module named 'flask'"
-
-**Solution:** Ensure virtual environment is activated
-```bash
-cd backend
-source venv/bin/activate
-pip install -r requirements.txt
+### Run Application
+```shell
+python run.py
 ```
 
-### "Port 5000 is already in use"
-
-**Solution:** Kill the process or change port
-```bash
-# Kill process on port 5000 (macOS/Linux)
-lsof -ti:5000 | xargs kill -9
-
-# Or change port in .env
-echo "PORT=5001" >> .env
-```
-
-### "Database is locked"
-
-**Solution:** Stop Flask first, then access database
-```bash
-# Stop Flask (Ctrl+C)
-# Then access database
-```
-
-### Tests failing with import errors
-
-**Solution:** Use `python -m pytest` instead of `pytest`
-```bash
-python -m pytest -v
-```
-
----
-
-## 📚 Additional Resources
-
-- [Flask Documentation](https://flask.palletsprojects.com/)
-- [SQLAlchemy Tutorial](https://docs.sqlalchemy.org/en/20/tutorial/)
-- [Hardhat Documentation](https://hardhat.org/docs)
-- [Ethers.js Documentation](https://docs.ethers.org/)
-
----
-
-## 👥 Team
-
-**Group 10 - Fall 2025**
-- Technical University of Denmark (DTU)
-- Course: Software Processes and Patterns (02369)
-
----
-
-## 📝 License
-
-This project is part of academic coursework at DTU.
-
----
-
-**Last Updated:** November 4, 2025
+Visit http://localhost:5000 to access the application.
