@@ -1,10 +1,53 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends "base.html" %}
 
-</body>
-</html>
+{% block title %}Verify Credential{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <!-- Hero -->
+      <div class="text-center mb-5">
+        <div class="mb-4 verify-shield-animation">
+          <i class="fas fa-shield-check fa-5x"
+             style="background: linear-gradient(135deg, var(--primary), var(--success)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+        </div>
+        <h1 class="display-5 fw-bold mb-3">Verify Credential</h1>
+        <p class="lead text-secondary">Enter a token ID or a verification URL</p>
+      </div>
+
+      <!-- Input card -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-body p-5">
+          <!-- Keep action as "#" and let JS do the redirect to /verify/credential/<id> -->
+          <form action="#" method="GET" id="verifyForm">
+            <div class="input-group input-group-lg">
+              <span class="input-group-text bg-white">
+                <i class="fas fa-hashtag text-muted"></i>
+              </span>
+              <input
+                type="text"
+                class="form-control form-control-lg"
+                id="tokenInput"
+                placeholder="Enter Token ID or Verification URL"
+                required
+                autocomplete="off">
+              <button class="btn btn-primary btn-lg px-4" type="submit">
+                <i class="fas fa-search me-2"></i>Search
+              </button>
+            </div>
+          </form>
+
+          <div class="text-center mt-3">
+            <small class="text-muted">
+              <i class="fas fa-info-circle me-1"></i>
+              We’ll redirect you to the credential page.
+            </small>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}
