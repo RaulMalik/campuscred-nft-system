@@ -6,7 +6,12 @@ import os
 import tempfile
 from app import db
 from app.models import Claim
+import sys
+from pathlib import Path
 
+backend_dir = Path(__file__).resolve().parent
+if str(backend_dir) not in sys.path:
+    sys.path.insert(0, str(backend_dir))
 
 @pytest.fixture
 def app():
@@ -34,11 +39,12 @@ def app():
     db.init_app(app)
 
     # IMPORTANT: Register all blueprints!, otherwise routes fail
-    from app.routes import home, auth, claims, instructor
+    from app.routes import home, auth, claims, instructor, verify
     app.register_blueprint(home.bp)
     app.register_blueprint(auth.bp)
     app.register_blueprint(claims.bp)
     app.register_blueprint(instructor.bp)
+    app.register_blueprint(verify.bp)
 
     # tables in the temp database
     with app.app_context():
