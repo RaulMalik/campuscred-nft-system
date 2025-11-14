@@ -5,6 +5,7 @@ Run this after cloning the repository to create your local database
 
 from app import create_app, db
 from app.models import Claim
+from sqlalchemy import inspect
 
 
 def setup_database():
@@ -16,7 +17,8 @@ def setup_database():
         db.create_all()
 
         # Verify tables were created
-        tables = db.engine.table_names()
+        inspector = inspect(db.engine)
+        tables = inspector.get_table_names()
         print(f"Database created successfully!")
         print(f"Tables: {', '.join(tables)}")
 
