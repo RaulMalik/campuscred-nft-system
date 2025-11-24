@@ -162,6 +162,33 @@
               <small class="text-muted">This hash can be used to verify the integrity of the original evidence file</small>
             </div>
             {% endif %}
+
+            {% if show_private and credential.has_evidence %}
+            <div class="col-12 mt-3">
+              <div class="card bg-success bg-opacity-10 border-success">
+                <div class="card-body">
+                  <h6 class="fw-bold mb-3">
+                    <i class="fas fa-download me-2"></i>Download Evidence Document
+                  </h6>
+                  <p class="text-muted small mb-3">
+                    The evidence file will be digitally signed before download for authenticity verification.
+                  </p>
+                  <a href="{{ url_for('verify.download_evidence', verifier_token=verifier_token) }}"
+                     class="btn btn-success">
+                    <i class="fas fa-file-download me-2"></i>
+                    Download {{ credential.evidence_file_name }}
+                  </a>
+                  <div class="mt-2">
+                    <small class="text-muted">
+                      <i class="fas fa-shield-alt me-1"></i>
+                      SHA-256: <code class="small">{{ credential.evidence_hash }}</code>
+                    </small>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% endif %}
+
           </div>
 
           <!-- Blockchain Details -->
