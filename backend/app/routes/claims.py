@@ -71,7 +71,23 @@ def submit_claim():
             )
 
             if file_path:
-                file_hash = Claim.compute_file_hash(file_path)
+                # Compute hash - different method for S3 vs local files
+                if storage_service.use_s3:
+                    # For S3: retrieve file content and compute hash
+                    file_content = storage_service.get_file(file_path)
+                    if file_content:
+                        import hashlib
+                        sha256_hash = hashlib.sha256()
+                        sha256_hash.update(file_content)
+                        file_hash = sha256_hash.hexdigest()
+                    else:
+                        flash('Warning: File uploaded but hash could not be computed', 'warning')
+                        file_hash = None
+                else:
+                    # for our local files we already use existing method
+                    file_hash = Claim.compute_file_hash(file_path)
+
+                # update claim with file info
                 new_claim.evidence_file_path = file_path
                 new_claim.evidence_file_name = original_filename
                 new_claim.evidence_file_hash = file_hash

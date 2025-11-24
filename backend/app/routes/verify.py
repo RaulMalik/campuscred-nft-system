@@ -1,7 +1,11 @@
 from flask import Blueprint, render_template, request, jsonify, current_app
 from app.models import Claim
 from app.services.blockchain import BlockchainService
+from flask import send_file
+from app.services.storage import StorageService
+from app.services.pdf_signer import PDFSignerService
 from app.services.ipfs import IPFSService
+import io
 import secrets
 import time
 
@@ -10,6 +14,8 @@ bp = Blueprint('verify', __name__, url_prefix='/verify')
 # store temporary verifier links, for production we can use Redis or database (speak with customer)
 verifier_links = {}
 
+storage_service = StorageService()
+pdf_signer = PDFSignerService()
 
 @bp.route('/', endpoint='verify_home')
 def verify_home():
@@ -164,6 +170,8 @@ def view_private_credential(verifier_token):
             'student_name': claim.student_name,
             'student_email': claim.student_email,
             'evidence_file_name': claim.evidence_file_name,
+            'claim_id': claim.id,
+            'has_evidence': bool(claim.evidence_file_path),
             'etherscan_url': f'https://sepolia.etherscan.io/tx/{claim.transaction_hash}' if claim.transaction_hash else None,
             # time remaining
             'expires_in': int(link_data['expires_at'] - time.time())
@@ -189,3 +197,61 @@ def _cleanup_expired_links():
                       if current_time > data['expires_at']]
     for token in expired_tokens:
         del verifier_links[token]
+
+
+@bp.route('/download-evidence/<verifier_token>')
+def download_evidence(verifier_token):
+    """
+    Download evidence file using valid verifier token
+    Only accessible with time-limited verifier links
+    """
+    try:
+        #verify toekn first
+        if verifier_token not in verifier_links:
+            return jsonify({'error': 'Invalid or expired verifier link'}), 403
+
+        link_data = verifier_links[verifier_token]
+
+        #check if expired
+        if time.time() > link_data['expires_at']:
+            del verifier_links[verifier_token]
+            return jsonify({'error': 'Verifier link has expired'}), 403
+
+
+        claim = Claim.query.get(link_data['claim_id'])
+        if not claim or not claim.evidence_file_path:
+            return jsonify({'error': 'Evidence file not found'}), 404
+
+        file_content = storage_service.get_file(claim.evidence_file_path)
+
+        if not file_content:
+            return jsonify({'error': 'Failed to retrieve file'}), 500
+
+        #determine PDF siggning
+        is_pdf = claim.evidence_file_name.lower().endswith('.pdf')
+
+        if is_pdf:
+            #sign the PDF before we send
+            try:
+                metadata = {
+                    'title': f'{claim.course_code} - {claim.student_name}',
+                    'subject': f'Academic Credential Evidence - Token #{claim.token_id}'
+                }
+                file_content = pdf_signer.sign_pdf(file_content, metadata)
+                current_app.logger.info(f"PDF signed for claim {claim.id}")
+            except Exception as sign_error:
+                current_app.logger.warning(f"Failed to sign PDF: {str(sign_error)}, sending unsigned")
+
+        #send the file
+        mimetype = 'application/pdf' if is_pdf else 'application/octet-stream'
+
+        return send_file(
+            io.BytesIO(file_content),
+            mimetype=mimetype,
+            as_attachment=True,
+            download_name=claim.evidence_file_name
+        )
+
+    except Exception as e:
+        current_app.logger.error(f"Error downloading evidence: {str(e)}")
+        return jsonify({'error': 'Failed to download evidence'}), 500
