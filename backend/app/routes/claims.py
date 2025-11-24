@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from app import db
 from app.models import Claim
 from app.services.storage import StorageService
@@ -10,8 +10,17 @@ storage_service = StorageService()
 @bp.route('/portal')
 def portal():
     """Student portal - view and submit claims"""
-    claims = Claim.query.order_by(Claim.created_at.desc()).all()
-    return render_template('student_portal.html', credentials=claims)
+    # get wallet address from session if user connected
+    wallet_address = session.get('wallet_address')
+
+    # If wallet connected, filter claims by wallet
+    if wallet_address:
+        claims = Claim.query.filter_by(student_address=wallet_address).order_by(Claim.created_at.desc()).all()
+    else:
+        # Show all claims (for demo purposes)
+        claims = Claim.query.order_by(Claim.created_at.desc()).all()
+
+    return render_template('student_portal.html', credentials=claims, wallet=wallet_address)
 
 
 @bp.route('/submit-claim', methods=['POST'])
@@ -27,6 +36,9 @@ def submit_claim():
         description = request.form.get('description', '').strip()
         evidence_file = request.files.get('evidence')
 
+        # get wallet address from session
+        wallet_address = session.get('wallet_address')
+
         # Validate required fields
         if not all([student_name, student_email, credential_type, course_code]):
             flash('Please fill in all required fields!', 'danger')
@@ -41,6 +53,7 @@ def submit_claim():
         new_claim = Claim(
             student_name=student_name,
             student_email=student_email,
+            student_address=wallet_address,
             credential_type=credential_type,
             course_code=course_code.upper(),
             description=f"{course_name}: {description}" if course_name else description,
@@ -58,13 +71,35 @@ def submit_claim():
             )
 
             if file_path:
-                file_hash = Claim.compute_file_hash(file_path)
+                # Compute hash - different method for S3 vs local files
+                if storage_service.use_s3:
+                    # For S3: retrieve file content and compute hash
+                    file_content = storage_service.get_file(file_path)
+                    if file_content:
+                        import hashlib
+                        sha256_hash = hashlib.sha256()
+                        sha256_hash.update(file_content)
+                        file_hash = sha256_hash.hexdigest()
+                    else:
+                        flash('Warning: File uploaded but hash could not be computed', 'warning')
+                        file_hash = None
+                else:
+                    # for our local files we already use existing method
+                    file_hash = Claim.compute_file_hash(file_path)
+
+                # update claim with file info
                 new_claim.evidence_file_path = file_path
                 new_claim.evidence_file_name = original_filename
                 new_claim.evidence_file_hash = file_hash
                 db.session.commit()
 
-        flash(f'Claim submitted successfully! Tracking ID: #{new_claim.id}', 'success')
+        success_message = f'Claim submitted successfully! Tracking ID: #{new_claim.id}'
+        if wallet_address:
+            success_message += 'Your wallet is connected - NFT will be minted when approved!'
+        else:
+            success_message += ' Connect your wallet to receive an NFT when approved.' #in case something fails
+
+        flash(success_message, 'success')
         return redirect(url_for('student.portal'))
 
     except Exception as e:

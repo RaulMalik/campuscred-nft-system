@@ -6,21 +6,21 @@
 <div class="container py-5">
   <div class="row justify-content-center">
     <div class="col-lg-8">
-      <!-- Hero -->
+
+      {% if not credential and not error %}
+      <!-- Search Form -->
       <div class="text-center mb-5">
         <div class="mb-4 verify-shield-animation">
           <i class="fas fa-shield-check fa-5x"
              style="background: linear-gradient(135deg, var(--primary), var(--success)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
         </div>
         <h1 class="display-5 fw-bold mb-3">Verify Credential</h1>
-        <p class="lead text-secondary">Enter a token ID or a verification URL</p>
+        <p class="lead text-secondary">Enter a Token ID to verify a credential on the blockchain</p>
       </div>
 
-      <!-- Input card -->
       <div class="card shadow-sm mb-4">
         <div class="card-body p-5">
-          <!-- Keep action as "#" and let JS do the redirect to /verify/credential/<id> -->
-          <form action="#" method="GET" id="verifyForm">
+          <form action="#" method="GET" id="verifyForm" onsubmit="return handleVerifySubmit(event)">
             <div class="input-group input-group-lg">
               <span class="input-group-text bg-white">
                 <i class="fas fa-hashtag text-muted"></i>
@@ -29,11 +29,11 @@
                 type="text"
                 class="form-control form-control-lg"
                 id="tokenInput"
-                placeholder="Enter Token ID or Verification URL"
+                placeholder="Enter Token ID (e.g., 0, 1, 2...)"
                 required
                 autocomplete="off">
               <button class="btn btn-primary btn-lg px-4" type="submit">
-                <i class="fas fa-search me-2"></i>Search
+                <i class="fas fa-search me-2"></i>Verify
               </button>
             </div>
           </form>
@@ -41,13 +41,296 @@
           <div class="text-center mt-3">
             <small class="text-muted">
               <i class="fas fa-info-circle me-1"></i>
-              We’ll redirect you to the credential page.
+              Public verification - no wallet required
             </small>
           </div>
         </div>
       </div>
+      {% endif %}
+
+      {% if error %}
+      <!-- Error Message -->
+      <div class="alert alert-danger d-flex align-items-center" role="alert">
+        <i class="fas fa-exclamation-triangle me-3 fa-2x"></i>
+        <div>
+          <h5 class="alert-heading mb-1">Verification Failed</h5>
+          <p class="mb-0">{{ error }}</p>
+        </div>
+      </div>
+      <div class="text-center mt-4">
+        <a href="{{ url_for('verify.verify_home') }}" class="btn btn-primary">
+          <i class="fas fa-arrow-left me-2"></i>Try Another Credential
+        </a>
+      </div>
+      {% endif %}
+
+      {% if credential %}
+      <!-- Credential Display -->
+      <div class="card shadow-lg mb-4">
+        <div class="card-header bg-success text-white">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <h4 class="mb-0">
+                <i class="fas fa-check-circle me-2"></i>
+                Verified Credential
+              </h4>
+            </div>
+            {% if credential.is_revoked %}
+            <span class="badge bg-danger">REVOKED</span>
+            {% else %}
+            <span class="badge bg-light text-dark">VALID</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="card-body p-4">
+          <!-- Public Information -->
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <label class="fw-semibold text-secondary small">Token ID</label>
+              <p class="mb-0 fw-bold">#{{ credential.token_id }}</p>
+            </div>
+
+            <div class="col-md-6">
+              <label class="fw-semibold text-secondary small">Credential Type</label>
+              <p class="mb-0">
+                <span class="badge badge-{{ credential.credential_type.replace('-', '') }}">
+                  {{ credential.credential_type }}
+                </span>
+              </p>
+            </div>
+
+            <div class="col-md-6">
+              <label class="fw-semibold text-secondary small">Course Code</label>
+              <p class="mb-0 fw-bold">{{ credential.course_code }}</p>
+            </div>
+
+            <div class="col-md-6">
+              <label class="fw-semibold text-secondary small">Issued Date</label>
+              <p class="mb-0">{{ credential.issued_at }}</p>
+            </div>
+
+            <div class="col-12">
+              <label class="fw-semibold text-secondary small">Description</label>
+              <p class="mb-0">{{ credential.description }}</p>
+            </div>
+
+            <div class="col-12">
+              <label class="fw-semibold text-secondary small">Issuer</label>
+              <p class="mb-0">{{ credential.issuer }}</p>
+            </div>
+
+            <div class="col-12">
+              <label class="fw-semibold text-secondary small">Owner Address</label>
+              <p class="mb-0"><code>{{ credential.owner_address }}</code></p>
+            </div>
+
+            {% if show_private %}
+            <!-- Private Information (only shown via verifier link) -->
+            <div class="col-12">
+              <div class="alert alert-warning">
+                <i class="fas fa-eye me-2"></i>
+                <strong>Private Information Disclosed</strong> - This link expires in {{ (credential.expires_in / 60)|int }} minutes
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <label class="fw-semibold text-secondary small">Student Name</label>
+              <p class="mb-0 fw-bold">{{ credential.student_name }}</p>
+            </div>
+
+            <div class="col-md-6">
+              <label class="fw-semibold text-secondary small">Student Email</label>
+              <p class="mb-0">{{ credential.student_email }}</p>
+            </div>
+
+            {% if credential.evidence_file_name %}
+            <div class="col-12">
+              <label class="fw-semibold text-secondary small">Evidence File</label>
+              <p class="mb-0">
+                <i class="fas fa-file me-2"></i>{{ credential.evidence_file_name }}
+                <span class="text-muted ms-2">(Hash: {{ credential.evidence_hash[:16] }}...)</span>
+              </p>
+            </div>
+            {% endif %}
+            {% endif %}
+
+            {% if credential.evidence_hash and not show_private %}
+            <div class="col-12">
+              <label class="fw-semibold text-secondary small">Evidence Hash (SHA-256)</label>
+              <p class="mb-0"><code class="small">{{ credential.evidence_hash }}</code></p>
+              <small class="text-muted">This hash can be used to verify the integrity of the original evidence file</small>
+            </div>
+            {% endif %}
+
+            {% if show_private and credential.has_evidence %}
+            <div class="col-12 mt-3">
+              <div class="card bg-success bg-opacity-10 border-success">
+                <div class="card-body">
+                  <h6 class="fw-bold mb-3">
+                    <i class="fas fa-download me-2"></i>Download Evidence Document
+                  </h6>
+                  <p class="text-muted small mb-3">
+                    The evidence file will be digitally signed before download for authenticity verification.
+                  </p>
+                  <a href="{{ url_for('verify.download_evidence', verifier_token=verifier_token) }}"
+                     class="btn btn-success">
+                    <i class="fas fa-file-download me-2"></i>
+                    Download {{ credential.evidence_file_name }}
+                  </a>
+                  <div class="mt-2">
+                    <small class="text-muted">
+                      <i class="fas fa-shield-alt me-1"></i>
+                      SHA-256: <code class="small">{{ credential.evidence_hash }}</code>
+                    </small>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% endif %}
+
+          </div>
+
+          <!-- Blockchain Details -->
+          <div class="border-top pt-4">
+            <h6 class="fw-bold mb-3">
+              <i class="fas fa-cube me-2"></i>Blockchain Details
+            </h6>
+
+            {% if credential.transaction_hash %}
+            <div class="mb-3">
+              <label class="fw-semibold text-secondary small">Transaction Hash</label>
+              <p class="mb-0">
+                <code class="small">{{ credential.transaction_hash }}</code>
+                {% if credential.etherscan_url %}
+                <a href="{{ credential.etherscan_url }}" target="_blank" class="ms-2">
+                  <i class="fas fa-external-link-alt"></i> View on Etherscan
+                </a>
+                {% endif %}
+              </p>
+            </div>
+            {% endif %}
+
+            {% if credential.metadata_uri %}
+            <div class="mb-3">
+              <label class="fw-semibold text-secondary small">Metadata URI</label>
+              <p class="mb-0"><code class="small">{{ credential.metadata_uri }}</code></p>
+            </div>
+            {% endif %}
+
+            <div class="badge bg-ethereum">
+              <i class="fab fa-ethereum me-1"></i> Verified on Sepolia Testnet
+            </div>
+          </div>
+        </div>
+
+        <div class="card-footer bg-light">
+          <div class="d-flex justify-content-between align-items-center">
+            <small class="text-muted">
+              <i class="fas fa-info-circle me-1"></i>
+              This credential is stored on the Ethereum blockchain and cannot be altered
+            </small>
+            <a href="{{ url_for('verify.verify_home') }}" class="btn btn-sm btn-outline-primary">
+              Verify Another
+            </a>
+          </div>
+        </div>
+      </div>
+
+      {% if not show_private and credential.owner_address %}
+      <!-- Generate Verifier Link (for credential owner) -->
+      <div class="card">
+        <div class="card-body text-center">
+          <h6 class="fw-bold mb-3">
+            <i class="fas fa-key me-2"></i>Credential Owner?
+          </h6>
+          <p class="text-muted mb-3">
+            Generate a time-limited link to share your full credential details (including name and email) with employers
+          </p>
+          <button class="btn btn-warning" onclick="generateVerifierLink({{ credential.token_id }})">
+            <i class="fas fa-link me-2"></i>Generate Verifier Link (15 min)
+          </button>
+          <div id="verifierLinkResult" class="mt-3"></div>
+        </div>
+      </div>
+      {% endif %}
+      {% endif %}
 
     </div>
   </div>
 </div>
+
+<script>
+function handleVerifySubmit(event) {
+    event.preventDefault();
+    const tokenId = document.getElementById('tokenInput').value.trim();
+
+    if (tokenId) {
+        window.location.href = `/verify/credential/${tokenId}`;
+    }
+
+    return false;
+}
+
+async function generateVerifierLink(tokenId) {
+    try {
+        // Check if wallet is connected
+        const wallet = window.currentWallet ? window.currentWallet() : null;
+
+        if (!wallet) {
+            showToast('Please connect your wallet first', 'warning');
+            return;
+        }
+
+        const response = await fetch(`/verify/generate-verifier-link/${tokenId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                wallet_address: wallet
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            const fullUrl = window.location.origin + data.verifier_url;
+            const resultDiv = document.getElementById('verifierLinkResult');
+
+            resultDiv.innerHTML = `
+                <div class="alert alert-success">
+                    <h6 class="fw-bold mb-2">Verifier Link Generated!</h6>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="verifierUrl" value="${fullUrl}" readonly>
+                        <button class="btn btn-primary" onclick="copyVerifierLink()">
+                            <i class="fas fa-copy"></i> Copy
+                        </button>
+                    </div>
+                    <small class="text-muted mt-2 d-block">
+                        <i class="fas fa-clock me-1"></i>
+                        This link expires in ${Math.floor(data.expires_in / 60)} minutes
+                    </small>
+                </div>
+            `;
+
+            showToast('Verifier link generated successfully!', 'success');
+        } else {
+            showToast(data.error || 'Failed to generate link', 'danger');
+        }
+
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Error generating verifier link', 'danger');
+    }
+}
+
+function copyVerifierLink() {
+    const input = document.getElementById('verifierUrl');
+    input.select();
+    document.execCommand('copy');
+    showToast('Link copied to clipboard!', 'success');
+}
+</script>
+
 {% endblock %}

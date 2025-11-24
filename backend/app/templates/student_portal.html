@@ -244,10 +244,32 @@
                                             <i class="fas fa-certificate me-1"></i>Minted
                                         </span>
                                         <h6 class="fw-bold">{{ cred.course_code }} - {{ cred.description or 'Credential' }}</h6>
-                                        <p class="text-muted small mb-2">Token ID: {{ cred.token_id }}</p>
-                                        <button class="btn btn-sm btn-primary">
-                                            <i class="fas fa-external-link-alt me-1"></i>View Credential
-                                        </button>
+                                        <p class="text-muted small mb-2">
+                                            <strong>Token ID:</strong> {{ cred.token_id }}
+                                        </p>
+
+                                        <!-- Action Buttons -->
+                                        <div class="d-flex gap-2 flex-wrap mt-3">
+                                            <!-- View Credential Button -->
+                                            <a href="{{ url_for('verify.verify_credential', token_id=cred.token_id) }}"
+                                               class="btn btn-sm btn-primary" target="_blank">
+                                                <i class="fas fa-external-link-alt me-1"></i>View Credential
+                                            </a>
+
+                                            <!-- Copy Verification Link Button -->
+                                            <button class="btn btn-sm btn-outline-primary"
+                                                    onclick="copyVerificationLink({{ cred.token_id }})">
+                                                <i class="fas fa-link me-1"></i>Copy Link
+                                            </button>
+
+                                            <!-- Etherscan Link -->
+                                            {% if cred.transaction_hash %}
+                                            <a href="https://sepolia.etherscan.io/tx/{{ cred.transaction_hash }}"
+                                               target="_blank" class="btn btn-sm btn-outline-secondary">
+                                                <i class="fab fa-ethereum me-1"></i>View on Etherscan
+                                            </a>
+                                            {% endif %}
+                                        </div>
                                     </div>
                                 </div>
                                 {% endfor %}
@@ -293,4 +315,26 @@ fileInput.addEventListener('change', () => {
     }
 });
 </script>
+
+<script>
+function copyVerificationLink(tokenId) {
+    const baseUrl = window.location.origin;
+    const verifyUrl = `${baseUrl}/verify/credential/${tokenId}`;
+
+    // Copy to clipboard
+    navigator.clipboard.writeText(verifyUrl).then(function() {
+        showToast('Verification link copied to clipboard!', 'success');
+    }, function(err) {
+        // Laver en fallback for older browsers
+        const textArea = document.createElement("textarea");
+        textArea.value = verifyUrl;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        showToast('Verification link copied!', 'success');
+    });
+}
+</script>
+
 {% endblock %}
