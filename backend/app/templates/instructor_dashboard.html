@@ -152,16 +152,28 @@
                 <div class="card-body">
                     <h6 class="fw-bold mb-3">
                         <i class="fas fa-certificate me-2" style="color: var(--success);"></i>
-                        Recently Minted
+                        Minted Credentials
                     </h6>
                     {% if minted_claims %}
-                        {% for claim in minted_claims[:5] %}
+                        {% for claim in minted_claims %}
                         <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
                             <div>
                                 <div class="fw-semibold small">{{ claim.course_code }} - {{ claim.student_name }}</div>
                                 <small class="text-muted">Token #{{ claim.token_id }}</small>
                             </div>
-                            <span class="badge badge-minted">Minted</span>
+                            <div class="d-flex align-items-center gap-2">
+                                {% if claim.status == 'revoked' %}
+                                    <span class="badge bg-danger">Revoked</span>
+                                {% else %}
+                                    <span class="badge badge-minted">Minted</span>
+                                    <!-- Revoke Button -->
+                                    <button class="btn btn-sm btn-outline-danger"
+                                            onclick="revokeClaim({{ claim.id }})"
+                                            title="Revoke Credential">
+                                        <i class="fas fa-ban"></i>
+                                    </button>
+                                {% endif %}
+                            </div>
                         </div>
                         {% endfor %}
                     {% else %}
@@ -270,6 +282,27 @@ async function rejectClaim(claimId) {
         }
     } catch (error) {
         showToast('Error rejecting claim', 'error');
+    }
+}
+
+async function revokeClaim(claimId) {
+    if (!confirm('WARNING: This will permanently REVOKE this credential on the blockchain. This cannot be undone. Are you sure?')) return;
+
+    // Show loading state
+    showToast('Revoking credential on blockchain... this may take a moment.', 'info');
+
+    try {
+        const response = await fetch(`/instructor/revoke/${claimId}`, { method: 'POST' });
+        const data = await response.json();
+
+        if (data.success) {
+            showToast('Credential successfully revoked!', 'success');
+            setTimeout(() => location.reload(), 2000);
+        } else {
+            showToast(data.error || 'Failed to revoke claim', 'error');
+        }
+    } catch (error) {
+        showToast('Error revoking claim', 'error');
     }
 }
 

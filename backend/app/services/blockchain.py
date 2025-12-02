@@ -34,13 +34,11 @@ class BlockchainService:
 
         # Load contract ABI
         try:
-            # I tried multiple times here, it finally got to work on 8th mint test.
-            # do not change things around with this.
-            current_file = os.path.abspath(__file__)  # backend/app/services/blockchain.py
-            services_dir = os.path.dirname(current_file)  # backend/app/services
-            app_dir = os.path.dirname(services_dir)  # backend/app
-            backend_dir = os.path.dirname(app_dir)  # backend
-            project_root = os.path.dirname(backend_dir)  # project root
+            current_file = os.path.abspath(__file__)
+            services_dir = os.path.dirname(current_file)
+            app_dir = os.path.dirname(services_dir)
+            backend_dir = os.path.dirname(app_dir)
+            project_root = os.path.dirname(backend_dir)
             abi_path = os.path.join(project_root, 'contracts', 'CampusCredNFT_ABI.json')
 
             current_app.logger.info(f"Looking for ABI at: {abi_path}")
@@ -50,15 +48,19 @@ class BlockchainService:
                     contract_abi = json.load(f)
                 current_app.logger.info(f"Loaded full ABI with {len(contract_abi)} functions/events")
             else:
-                # minimal ABI for testing, so a little fallback
+                # minimal ABI fallback
                 contract_abi = [
                     {
-                        "inputs": [
-                            {"internalType": "address", "name": "recipient", "type": "address"},
-                            {"internalType": "string", "name": "uri", "type": "string"}
-                        ],
+                        "inputs": [{"internalType": "address", "name": "recipient", "type": "address"},{"internalType": "string", "name": "uri", "type": "string"}],
                         "name": "mint",
                         "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+                        "stateMutability": "nonpayable",
+                        "type": "function"
+                    },
+                    {
+                        "inputs": [{"internalType": "uint256", "name": "tokenId", "type": "uint256"}],
+                        "name": "revoke",
+                        "outputs": [],
                         "stateMutability": "nonpayable",
                         "type": "function"
                     },
@@ -84,7 +86,7 @@ class BlockchainService:
                         "type": "function"
                     }
                 ]
-                current_app.logger.warning("Using fallback ABI - run 'node scripts/export-abi.js' to export full ABI")
+                current_app.logger.warning("Using fallback ABI")
         except Exception as e:
             current_app.logger.error(f"Error loading contract ABI: {str(e)}")
             raise
@@ -105,13 +107,6 @@ class BlockchainService:
     def mint_credential(self, recipient_address, metadata_uri):
         """
         Mint a new credential NFT
-
-        Args:
-            recipient_address: Student's Ethereum address
-            metadata_uri: IPFS URI pointing to credential metadata
-
-        Returns:
-            tuple: (token_id, transaction_hash)
         """
         if not self.w3 or not self.contract:
             self.initialize()
@@ -119,10 +114,7 @@ class BlockchainService:
         if not self.deployer_account:
             raise ValueError("Deployer private key not configured")
 
-        # address is checksummed
         recipient_address = Web3.to_checksum_address(recipient_address)
-
-        #get current nonce
         nonce = self.w3.eth.get_transaction_count(self.deployer_account.address)
 
         # Estimate gas
@@ -131,15 +123,13 @@ class BlockchainService:
             metadata_uri
         ).estimate_gas({'from': self.deployer_account.address})
 
-        # get current base fee and calculate gas prices dynamically
+        # Calculate fees
         latest_block = self.w3.eth.get_block('latest')
         base_fee = latest_block['baseFeePerGas']
-        max_priority_fee = self.w3.to_wei(2, 'gwei')  # 2 gwei tip to miners
-        max_fee = base_fee * 2 + max_priority_fee  # Double base fee + tip for safety
+        max_priority_fee = self.w3.to_wei(2, 'gwei')
+        max_fee = base_fee * 2 + max_priority_fee
 
-        current_app.logger.info(f"Gas pricing - Base fee: {self.w3.from_wei(base_fee, 'gwei')} gwei, "
-                               f"Max fee: {self.w3.from_wei(max_fee, 'gwei')} gwei, "
-                               f"Priority fee: {self.w3.from_wei(max_priority_fee, 'gwei')} gwei")
+        current_app.logger.info(f"Gas pricing - Max fee: {self.w3.from_wei(max_fee, 'gwei')} gwei")
 
         # Build transaction
         txn = self.contract.functions.mint(
@@ -148,39 +138,29 @@ class BlockchainService:
         ).build_transaction({
             'from': self.deployer_account.address,
             'nonce': nonce,
-            'gas': int(gas_estimate * 1.2),  # Add 20% buffer
+            'gas': int(gas_estimate * 1.2),
             'maxFeePerGas': max_fee,
             'maxPriorityFeePerGas': max_priority_fee,
-            'chainId': 11155111  # Sepolia chain ID
+            'chainId': 11155111 # Sepolia chain ID
         })
 
-        # Sign transaction
+        # Sign and send
         signed_txn = self.w3.eth.account.sign_transaction(txn, self.deployer_account.key)
-
-        # send transaction. Important use rawTransaction instead of raw_transaction.
-        # This caused continious errors before
         tx_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
 
         current_app.logger.info(f"Minting transaction sent: {tx_hash.hex()}")
 
-        # wait for receipt (with timeout)
+        # Wait for receipt
         receipt = self.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=120)
 
         if receipt['status'] != 1:
             raise Exception("Transaction failed")
-
-        # Extract token ID from logs
-        # The mint function returns the token ID, we can parse it from logs
-        # For now, we'll track this manually in the database
-        # A proper implementation would parse the CredentialMinted event
 
         # Parse logs to get token ID
         token_id = None
         for log in receipt['logs']:
             try:
                 if log['address'].lower() == self.contract_address.lower():
-                    # This is a Transfer event from minting (from address(0))
-                    # Token ID is in the third topic (indexed parameter)
                     if len(log['topics']) >= 3:
                         token_id = int(log['topics'][3].hex(), 16)
                         break
@@ -189,22 +169,60 @@ class BlockchainService:
                 continue
 
         if token_id is None:
-            # Fallback: query the contract for the last token
-            # This is not ideal but works for testing
-            current_app.logger.warning("Could not parse token ID from logs, using fallback")
-            token_id = 0  # Will be updated manually
+            token_id = 0 # Fallback
 
         return token_id, tx_hash.hex()
+
+    def revoke_credential(self, token_id):
+
+        # revoke credential using the deployer (instructor) account
+
+        if not self.w3 or not self.contract:
+            self.initialize()
+
+        if not self.deployer_account:
+            raise ValueError("Deployer private key not configured")
+
+        nonce = self.w3.eth.get_transaction_count(self.deployer_account.address)
+
+        # estimate gas
+        gas_estimate = self.contract.functions.revoke(token_id).estimate_gas({
+            'from': self.deployer_account.address
+        })
+
+        # calculate fees again
+        latest_block = self.w3.eth.get_block('latest')
+        base_fee = latest_block['baseFeePerGas']
+        max_priority_fee = self.w3.to_wei(2, 'gwei')
+        max_fee = base_fee * 2 + max_priority_fee
+
+        # build the transaction itself
+        txn = self.contract.functions.revoke(token_id).build_transaction({
+            'from': self.deployer_account.address,
+            'nonce': nonce,
+            'gas': int(gas_estimate * 1.2),
+            'maxFeePerGas': max_fee,
+            'maxPriorityFeePerGas': max_priority_fee,
+            'chainId': 11155111
+        })
+
+        # Sign and send
+        signed_txn = self.w3.eth.account.sign_transaction(txn, self.deployer_account.key)
+        tx_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
+
+        current_app.logger.info(f"Revoke transaction sent: {tx_hash.hex()}")
+
+        # wait receipt
+        receipt = self.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=120)
+
+        if receipt['status'] != 1:
+            raise Exception("Revocation transaction failed")
+
+        return tx_hash.hex()
 
     def verify_credential(self, token_id):
         """
         Verify a credential on-chain
-
-        Args:
-            token_id: NFT token ID
-
-        Returns:
-            dict: Credential verification data
         """
         if not self.w3 or not self.contract:
             self.initialize()
@@ -229,9 +247,7 @@ class BlockchainService:
             }
 
     def get_balance(self, address):
-        """Get ETH balance of an address"""
         if not self.w3:
             self.initialize()
-
         balance_wei = self.w3.eth.get_balance(Web3.to_checksum_address(address))
         return self.w3.from_wei(balance_wei, 'ether')
