@@ -314,6 +314,7 @@ main {
     border-radius: 20px;
 }
 
+.badge-revoked,
 .badge-denied,
 .badge-rejected {
     background: var(--danger);
@@ -362,7 +363,8 @@ main {
 }
 
 .status-icon.status-denied,
-.status-icon.status-rejected {
+.status-icon.status-rejected,
+.status-icon.status-revoked {
     background: rgba(224, 61, 61, 0.1);
     color: var(--danger);
 }
