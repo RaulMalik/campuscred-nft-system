@@ -19,8 +19,10 @@ def dashboard():
     # recently approved claims
     approved_claims = Claim.query.filter_by(status='approved').order_by(Claim.approved_at.desc()).limit(5).all()
 
-    # minted claims
-    minted_claims = Claim.query.filter_by(status='minted').order_by(Claim.minted_at.desc()).limit(5).all()
+    # minted claims (including revoked ones so we can see them)
+    minted_claims = Claim.query.filter(
+        Claim.status.in_(['minted', 'revoked'])
+    ).order_by(Claim.minted_at.desc()).limit(10).all()
 
     # Calculate statistics
     one_week_ago = datetime.utcnow() - timedelta(days=7)
@@ -72,12 +74,10 @@ def get_claim(claim_id):
 def approve_claim(claim_id):
     """
     Approve a claim and mint NFT if student has wallet connected
-    Changes status from 'pending' to 'approved' or 'minted'
     """
     try:
         claim = Claim.query.get_or_404(claim_id)
 
-        # check if approved
         if claim.status != 'pending':
             return jsonify({
                 'success': False,
@@ -132,20 +132,16 @@ def approve_claim(claim_id):
                 claim.minted_at = datetime.utcnow()
                 db.session.commit()
 
-                current_app.logger.info(f"Successfully minted NFT {token_id} for claim {claim_id}")
-
                 return jsonify({
                     'success': True,
                     'message': f'Claim approved and NFT minted! Token ID: {token_id}',
                     'status': 'minted',
                     'token_id': token_id,
-                    'tx_hash': tx_hash,
-                    'etherscan_url': f'https://sepolia.etherscan.io/tx/{tx_hash}'
+                    'tx_hash': tx_hash
                 })
 
             except Exception as mint_error:
                 current_app.logger.error(f"Minting error for claim {claim_id}: {str(mint_error)}")
-                # keep status as approved even if minting fails (not quite sure if it should stay approved or fail)
                 return jsonify({
                     'success': True,
                     'message': f'Claim approved! Minting will be retried later.',
@@ -153,7 +149,6 @@ def approve_claim(claim_id):
                     'minting_error': str(mint_error)
                 })
         else:
-            # no wallet address, just approve
             return jsonify({
                 'success': True,
                 'message': 'Claim approved! Student needs to connect wallet for NFT minting.',
@@ -172,25 +167,18 @@ def approve_claim(claim_id):
 @bp.route('/reject/<int:claim_id>', methods=['POST'])
 @instructor_required
 def reject_claim(claim_id):
-    """
-    Reject a claim with reason
-    Changes status from 'pending' to 'denied'
-    """
     try:
         claim = Claim.query.get_or_404(claim_id)
 
-        # if already processed
         if claim.status != 'pending':
             return jsonify({
                 'success': False,
                 'error': f'Claim is already {claim.status}'
             }), 400
 
-        # rejection reason from request
         data = request.get_json()
         reason = data.get('reason', 'No reason provided')
 
-        # update claim status
         claim.status = 'denied'
         claim.instructor_notes = reason
         claim.approved_by = 'Instructor'
@@ -212,68 +200,44 @@ def reject_claim(claim_id):
         }), 500
 
 
-@bp.route('/retry-mint/<int:claim_id>', methods=['POST'])
+@bp.route('/revoke/<int:claim_id>', methods=['POST'])
 @instructor_required
-def retry_mint(claim_id):
+def revoke_claim(claim_id):
     """
-    Retry minting for an approved claim
+    Revoke a minted credential on-chain and update status
     """
     try:
         claim = Claim.query.get_or_404(claim_id)
 
-        if claim.status != 'approved':
-            return jsonify({
-                'success': False,
-                'error': f'Can only mint approved claims (current status: {claim.status})'
-            }), 400
+        # Basic validation
+        if claim.status != 'minted':
+            return jsonify({'success': False, 'error': 'Only minted claims can be revoked'}), 400
 
-        if not claim.student_address:
-            return jsonify({
-                'success': False,
-                'error': 'Student wallet address not available'
-            }), 400
+        if claim.token_id is None:
+            return jsonify({'success': False, 'error': 'No token ID found for this claim'}), 400
 
-        # Attempt minting
         from app.services.blockchain import BlockchainService
-        from app.services.ipfs import IPFSService
-
-        ipfs_service = IPFSService()
-        metadata = {
-            "name": f"{claim.course_code} - {claim.credential_type}",
-            "description": claim.description or f"Credential for {claim.course_code}",
-            "attributes": [
-                {"trait_type": "Course Code", "value": claim.course_code},
-                {"trait_type": "Credential Type", "value": claim.credential_type},
-                {"trait_type": "Issuer", "value": "CampusCred Pilot"}
-            ],
-            "evidence_hash": claim.evidence_file_hash
-        }
-
-        metadata_uri = ipfs_service.upload_json(metadata)
-
         blockchain_service = BlockchainService()
-        token_id, tx_hash = blockchain_service.mint_credential(
-            claim.student_address,
-            metadata_uri
-        )
 
-        claim.status = 'minted'
-        claim.token_id = token_id
-        claim.transaction_hash = tx_hash
-        claim.metadata_uri = metadata_uri
-        claim.minted_at = datetime.utcnow()
+        # Perform on-chain revocation
+        current_app.logger.info(f"Revoking token ID {claim.token_id} for claim {claim_id}")
+        tx_hash = blockchain_service.revoke_credential(claim.token_id)
+
+        # Update local DB status
+        claim.status = 'revoked'
+        claim.updated_at = datetime.utcnow()
+        claim.instructor_notes = "Revoked by instructor on-chain"
         db.session.commit()
 
         return jsonify({
             'success': True,
-            'message': f'NFT minted successfully! Token ID: {token_id}',
-            'token_id': token_id,
+            'message': f'Credential revoked successfully! Tx: {tx_hash}',
             'tx_hash': tx_hash
         })
 
     except Exception as e:
-        current_app.logger.error(f"Retry mint error: {str(e)}")
+        current_app.logger.error(f"Error revoking claim {claim_id}: {str(e)}")
         return jsonify({
             'success': False,
-            'error': str(e)
+            'error': f"Revocation failed: {str(e)}"
         }), 500
